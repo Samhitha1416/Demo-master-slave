@@ -12,7 +12,7 @@ pipeline {
       }
     }
         stage('Checkout') {
-            agent {lablel 'win'}
+            agent {label 'win'}
             steps { checkout scm }
         }
         stage('Build & Test') {

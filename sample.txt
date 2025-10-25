@@ -1,0 +1,1 @@
+curl.exe -sO http://https://94200a44bd54.ngrok-free.app/jnlpJars/agent.jar & java -jar agent.jar -url http://https://94200a44bd54.ngrok-free.app/ -secret 11e13d8c7d6aac41e34d86cd972964dd3244e022460de33f5ca1c0c0cd6e9b30 -name "win-agent" -webSocket -workDir "C:\jenkins\agent"
