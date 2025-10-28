@@ -5,13 +5,6 @@ pipeline {
         maven 'M3.9'
     }
 
-    environment {
-        DOCKER_IMAGE = "samhitha1610/demo-integration"
-        DOCKER_TAG = "v14"
-        DOCKER_USER = "samhitha1610"
-        DOCKER_PASS = "dckr_pat_rv7MMFLO_qmPLwfEL0Q5t_46FQE"
-    }
-
     stages {
 
         stage('Checkout') {
@@ -29,22 +22,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "🐳 Building Docker image..."
-                    bat "docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% ."
-                    bat "docker tag %DOCKER_IMAGE%:%DOCKER_TAG% %DOCKER_IMAGE%:latest"
-                }
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    echo "🚀 Running Docker container (test)..."
-                    bat '''
-                    docker ps -q --filter "name=demo-container" | findstr . && docker stop demo-container && docker rm demo-container || echo "No previous container"
-                    docker run -d --name demo-container %DOCKER_IMAGE%:%DOCKER_TAG%
-                    docker ps
-                    '''
+                    bat "docker build -t samhitha1610/demo-integration:latest . "
+		    bat "docker run samhitha1610/demo-integration:latest"
                 }
             }
         }
@@ -52,24 +31,13 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    echo "📦 Pushing Docker image to Docker Hub..."
                     bat '''
-                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
-                    docker push %DOCKER_IMAGE%:%DOCKER_TAG%
-                    docker push %DOCKER_IMAGE%:latest
+                    docker login -u samhitha1610 -p dckr_pat_rv7MMFLO_qmPLwfEL0Q5t_46FQE
+                    docker push samhitha1610/demo-integration:latest
                     docker logout
                     '''
                 }
             }
-        }
-    }
-
-    post {
-        failure {
-            echo "❌ Pipeline failed. Check console output for details."
-        }
-        success {
-            echo "✅ Pipeline completed successfully."
         }
     }
 }
