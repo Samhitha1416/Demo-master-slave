@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_HUB_REPO = 'samhitha1610/demo-integration'
         DOCKER_IMAGE_TAG = "v${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credential'
     }
 
     tools {
