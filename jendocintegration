@@ -22,8 +22,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat "docker build -t samhitha1610/demo-integration:latest . "
-		    bat "docker run samhitha1610/demo-integration:latest"
+                    bat "docker build -t samhitha1610/demo:latest . "
+		            bat "docker run samhitha1610/demo:latest"
                 }
             }
         }
@@ -33,7 +33,7 @@ pipeline {
                 script {
                     bat '''
                     docker login -u samhitha1610 -p dckr_pat_rv7MMFLO_qmPLwfEL0Q5t_46FQE
-                    docker push samhitha1610/demo-integration:latest
+                    docker push samhitha1610/demo:latest
                     docker logout
                     '''
                 }
