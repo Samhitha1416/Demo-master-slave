@@ -7,14 +7,6 @@ pipeline {
 
     stages {
 
-        stage('Where am I (Controller)') {
-            agent { label 'built-in' }
-            steps {
-                echo "NODE = ${env.NODE_NAME}"
-                echo "WORKSPACE = ${env.WORKSPACE}"
-            }
-        }
-
         stage('Checkout') {
             
             agent { label 'win' }
@@ -41,21 +33,16 @@ pipeline {
             }
         }
 
-        stage('Parallel: Controller vs Agent') {
+       stage('Parallel Run') {
             parallel {
-                stage('Controller lane') {
-                    agent { label 'built-in' }
-                    steps {
-                        echo "PARALLEL NODE = ${env.NODE_NAME}"
-                    }
+                stage('Controller') {
+                    steps { echo "Controller: ${env.NODE_NAME}" }
                 }
-                stage('Agent lane') {
-                    agent { label 'win' }
-                    steps {
-                        bat "echo PARALLEL NODE = %NODE_NAME%"
-                    }
+                stage('Agent') {
+                    steps { bat "echo Agent: %NODE_NAME%" }
                 }
             }
-        }
+        }
+
     }
 }
