@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_REPO = 'samhitha1610/demo-integration'
+        DOCKER_IMAGE_TAG = "v${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'   // Jenkins credential ID
+    }
+
+    tools {
+        maven 'M3.9'   // Maven tool configured in Jenkins
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                script {
+                    echo "🔧 Building Maven project..."
+                    sh 'mvn -B -DskipTests package'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "🐳 Building Docker image..."
+                    sh "docker build -t ${DOCKER_HUB_REPO}:${DOCKER_IMAGE_TAG} ."
+                    sh "docker tag ${DOCKER_HUB_REPO}:${DOCKER_IMAGE_TAG} ${DOCKER_HUB_REPO}:latest"
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    echo "📤 Pushing image to Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_HUB_REPO}:${DOCKER_IMAGE_TAG}
+                        docker push ${DOCKER_HUB_REPO}:latest
+                        docker logout
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    echo "🚀 Running container..."
+                    sh """
+                    docker stop demo-integration || true
+                    docker rm demo-integration || true
+                    docker run -d --name demo-integration -p 8080:8080 ${DOCKER_HUB_REPO}:latest
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Successfully built, pushed, and deployed: ${DOCKER_HUB_REPO}:${DOCKER_IMAGE_TAG}"
+        }
+        failure {
+            echo "❌ Pipeline failed. Check the console output for details."
+        }
+    }
+}
