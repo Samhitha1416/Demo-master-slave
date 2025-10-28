@@ -8,7 +8,6 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            
             agent { label 'win' }
             steps {
                 checkout scm
@@ -33,16 +32,21 @@ pipeline {
             }
         }
 
-       stage('Parallel Run') {
+        stage('Parallel Run') {
             parallel {
                 stage('Controller') {
-                    steps { echo "Controller: ${env.NODE_NAME}" }
+                    agent { label 'built-in' }
+                    steps {
+                        echo "Controller: ${env.NODE_NAME}"
+                    }
                 }
                 stage('Agent') {
-                    steps { bat "echo Agent: %NODE_NAME%" }
+                    agent { label 'win' }
+                    steps {
+                        bat 'echo Agent: %NODE_NAME%'
+                    }
                 }
             }
-        }
-
+        }
     }
 }
