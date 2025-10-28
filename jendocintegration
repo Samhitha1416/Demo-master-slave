@@ -1,73 +1,75 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "samhitha1610/demo-integration"
-        DOCKER_TAG = "v14"   // you can change this each build or use ${BUILD_NUMBER}
+    tools {
+        maven 'M3.9'
     }
 
-    tools {
-        maven 'M3.9' // make sure you have this Maven tool name configured in Jenkins
+    environment {
+        DOCKER_IMAGE = "samhitha1610/demo-integration"
+        DOCKER_TAG = "v14"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                echo "📦 Checking out source code..."
                 checkout scm
             }
         }
 
         stage('Build with Maven') {
             steps {
-                echo "⚙️ Building project using Maven..."
                 bat 'mvn -B -DskipTests clean package'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "🐳 Building Docker image..."
-                bat """
-                    docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% .
-                    docker tag %DOCKER_IMAGE%:%DOCKER_TAG% %DOCKER_IMAGE%:latest
-                """
+                script {
+                    echo "🐳 Building Docker image..."
+                    bat "docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% ."
+                    bat "docker tag %DOCKER_IMAGE%:%DOCKER_TAG% %DOCKER_IMAGE%:latest"
+                }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                echo "🚀 Pushing image to Docker Hub..."
-                withCredentials([usernamePassword(credentialsId: 'jenkins', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat """
-                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                        docker push %DOCKER_IMAGE%:%DOCKER_TAG%
-                        docker push %DOCKER_IMAGE%:latest
-                        docker logout
-                    """
+                script {
+                    echo "📤 Pushing image to Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: 'jenkins', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        bat """
+                            echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                            docker push %DOCKER_IMAGE%:%DOCKER_TAG%
+                            docker push %DOCKER_IMAGE%:latest
+                            docker logout
+                        """
+                    }
                 }
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                echo "🏃 Running Docker container from latest image..."
-                bat """
-                    docker stop demo-integration || true
-                    docker rm demo-integration || true
-                    docker run -d -p 8080:8080 --name demo-integration %DOCKER_IMAGE%:latest
-                """
+                script {
+                    echo "🚀 Running Docker container..."
+                    // Stop old container if it exists, ignore errors
+                    bat 'docker stop demo-container || echo "No container to stop"'
+                    bat 'docker rm demo-container || echo "No container to remove"'
+                    // Run the new container
+                    bat 'docker run -d --name demo-container -p 2000:8080 samhitha1610/demo-integration:latest'
+                }
             }
         }
     }
 
     post {
-        success {
-            echo "✅ Pipeline completed successfully. Docker image pushed and container is running!"
-        }
         failure {
             echo "❌ Pipeline failed. Check console output for details."
+        }
+        success {
+            echo "✅ Pipeline completed successfully."
         }
     }
 }
